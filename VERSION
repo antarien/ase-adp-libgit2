@@ -39,7 +39,7 @@
 #   stable = Production ready (set manually)
 #
 # ==============================================================================
-ASE_ADP_LIBGIT2=00.00.01.00001
+ASE_ADP_LIBGIT2=00.00.02.00002
 ASE_ADP_LIBGIT2_NAME=ASE Adp Libgit2
 ASE_ADP_LIBGIT2_DESC=
 ASE_ADP_LIBGIT2_LAYER=5
