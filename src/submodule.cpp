@@ -14,6 +14,8 @@
 
 #include <ase/adp/libgit2/submodule.hpp>
 
+#include <utility>   // std::move — the ok-slot of Result is moved into place
+
 #include <git2/submodule.h>
 
 namespace ase::adp::libgit2::submodule {
@@ -54,21 +56,23 @@ int collect_cb(git_submodule* sm, const char* name, void* user) {
 
 }  // namespace
 
-std::variant<std::vector<SubmoduleInfo>, Error> list(Repository& repo) {
+ase::types::Result<std::vector<SubmoduleInfo>, Error> list(Repository& repo) {
+    using ListResult = ase::types::Result<std::vector<SubmoduleInfo>, Error>;
+
     if (!repo.valid()) {
         Error e;
         e.code = -1;
         e.message = "submodule::list() called on invalid Repository";
-        return e;
+        return ListResult::err(e);
     }
 
     std::vector<SubmoduleInfo> result;
     WalkState st{ &result };
     const int rc = git_submodule_foreach(repo.native_handle(), collect_cb, &st);
     if (rc != 0) {
-        return capture_last_error(rc);
+        return ListResult::err(capture_last_error(rc));
     }
-    return result;
+    return ListResult::ok(std::move(result));
 }
 
 }  // namespace ase::adp::libgit2::submodule

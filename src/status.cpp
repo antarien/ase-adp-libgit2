@@ -13,6 +13,8 @@
 
 #include <ase/adp/libgit2/status.hpp>
 
+#include <utility>   // std::move — the ok-slot of Result is moved into place
+
 #include <git2/status.h>
 #include <git2/diff.h>
 
@@ -91,14 +93,16 @@ void update_summary(StatusSummary& s, uint32_t flags) {
 
 }  // namespace
 
-std::variant<StatusResult, Error> scan(Repository& repo,
-                                       const StatusOptions& opts)
+ase::types::Result<StatusResult, Error> scan(Repository& repo,
+                                             const StatusOptions& opts)
 {
+    using ScanResult = ase::types::Result<StatusResult, Error>;
+
     if (!repo.valid()) {
         Error e;
         e.code = -1;
         e.message = "scan() called on invalid Repository";
-        return e;
+        return ScanResult::err(e);
     }
 
     git_status_options sopt = GIT_STATUS_OPTIONS_INIT;
@@ -125,7 +129,7 @@ std::variant<StatusResult, Error> scan(Repository& repo,
     git_status_list* list = nullptr;
     const int rc = git_status_list_new(&list, repo.native_handle(), &sopt);
     if (rc != 0 || list == nullptr) {
-        return capture_last_error(rc);
+        return ScanResult::err(capture_last_error(rc));
     }
 
     StatusResult result;
@@ -144,7 +148,7 @@ std::variant<StatusResult, Error> scan(Repository& repo,
         result.entries.push_back(std::move(decoded));
     }
     git_status_list_free(list);
-    return result;
+    return ScanResult::ok(std::move(result));
 }
 
 }  // namespace ase::adp::libgit2

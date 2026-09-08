@@ -20,8 +20,9 @@
 #include <ase/adp/libgit2/error.hpp>
 #include <ase/adp/libgit2/repository.hpp>
 
+#include <ase/types/result.hpp>
+
 #include <string>
-#include <variant>
 #include <vector>
 
 namespace ase::adp::libgit2 {
@@ -35,8 +36,14 @@ struct SubmoduleInfo {
 
 namespace submodule {
 
-/** Enumerate every submodule registered in `repo`. */
-std::variant<std::vector<SubmoduleInfo>, Error> list(Repository& repo);
+/**
+ * Enumerate every submodule registered in `repo`.
+ *
+ * @return the submodule list on success, Error on failure. Check with
+ *         is_ok()/is_err(); take the value with unwrap(), the error
+ *         with unwrap_err().
+ */
+ase::types::Result<std::vector<SubmoduleInfo>, Error> list(Repository& repo);
 
 }  // namespace submodule
 }  // namespace ase::adp::libgit2

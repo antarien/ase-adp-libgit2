@@ -34,39 +34,43 @@ std::string strip_trailing_slash(std::string s) {
 
 }  // namespace
 
-std::variant<Repository, Error> Repository::open(const std::string& path) {
+ase::types::Result<Repository, Error> Repository::open(const std::string& path) {
+    using OpenResult = ase::types::Result<Repository, Error>;
+
     git_repository* repo = nullptr;
     const int rc = git_repository_open(&repo, path.c_str());
     if (rc != 0 || repo == nullptr) {
-        return capture_last_error(rc);
+        return OpenResult::err(capture_last_error(rc));
     }
-    return Repository(repo);
+    return OpenResult::ok(Repository(repo));
 }
 
-std::variant<Repository, Error> Repository::open_submodule(
+ase::types::Result<Repository, Error> Repository::open_submodule(
     const std::string& parent_path,
     const std::string& submodule_path)
 {
+    using OpenResult = ase::types::Result<Repository, Error>;
+
     auto parent = open(parent_path);
-    if (auto* err = std::get_if<Error>(&parent)) {
-        return *err;
+    if (parent.is_err()) {
+        return OpenResult::err(parent.unwrap_err());
     }
-    auto& parent_repo = std::get<Repository>(parent);
+    auto& parent_repo = parent.unwrap();
 
     git_submodule* sm = nullptr;
     int rc = git_submodule_lookup(&sm, parent_repo.native_handle(),
                                   submodule_path.c_str());
     if (rc != 0 || sm == nullptr) {
-        return capture_last_error(rc);
+        return OpenResult::err(capture_last_error(rc));
     }
 
     git_repository* sm_repo = nullptr;
     rc = git_submodule_open(&sm_repo, sm);
     git_submodule_free(sm);
     if (rc != 0 || sm_repo == nullptr) {
-        return capture_last_error(rc);
+        return OpenResult::err(capture_last_error(rc));
     }
-    return Repository(sm_repo);
+    return OpenResult::ok(Repository(sm_repo));
 }
 
 Repository::~Repository() { close(); }

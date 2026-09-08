@@ -20,8 +20,9 @@
 
 #include <ase/adp/libgit2/error.hpp>
 
+#include <ase/types/result.hpp>
+
 #include <string>
-#include <variant>
 
 // Forward-declare libgit2 types so this header has zero include dep on
 // <git2.h>. The actual definitions live in libgit2's headers and are
@@ -38,16 +39,20 @@ public:
      * discover logic locates the .git directory.
      *
      * @return Repository on success, Error on failure (path missing,
-     *         not a git repo, ambiguous, …).
+     *         not a git repo, ambiguous, …). Check with is_ok()/is_err();
+     *         take the value with unwrap(), the error with unwrap_err().
      */
-    static std::variant<Repository, Error> open(const std::string& path);
+    static ase::types::Result<Repository, Error> open(const std::string& path);
 
     /**
      * Open the repository associated with a submodule located at
      * `submodule_path` inside `parent_path`. Convenience for the
      * scanner: avoids parsing .gitmodules manually.
+     *
+     * @return Repository on success, Error on failure. Same carrier and
+     *         same inspection API as open().
      */
-    static std::variant<Repository, Error> open_submodule(
+    static ase::types::Result<Repository, Error> open_submodule(
         const std::string& parent_path,
         const std::string& submodule_path);
 

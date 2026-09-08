@@ -27,9 +27,10 @@
 #include <ase/adp/libgit2/error.hpp>
 #include <ase/adp/libgit2/repository.hpp>
 
+#include <ase/types/result.hpp>
+
 #include <cstdint>
 #include <string>
-#include <variant>
 #include <vector>
 
 namespace ase::adp::libgit2 {
@@ -106,8 +107,12 @@ struct StatusResult {
  * Run git_status_list on `repo` with the supplied options and decode
  * the result into a StatusResult. The libgit2 handle is freed before
  * this function returns; consumers see only owning ASE types.
+ *
+ * @return StatusResult on success, Error on failure. Check with
+ *         is_ok()/is_err(); take the value with unwrap(), the error
+ *         with unwrap_err().
  */
-std::variant<StatusResult, Error> scan(
+ase::types::Result<StatusResult, Error> scan(
     Repository& repo,
     const StatusOptions& opts = {});
 

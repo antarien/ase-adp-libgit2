@@ -26,11 +26,29 @@ ASE LIBGIT2 ADAPTER BUILD CONFIGURATION
                  repo). This adapter is the supported entry point for
                  that path; spawning the `git` CLI is forbidden.
 
-             Whitelist:
-               adapter/ase-adp-libgit2/ is whitelisted in
-               core/ase-validator/ecs_validator/data/third_party_oop.json
-               for the EXTERN_C_FORBIDDEN rule (consumers do not need
-               their own whitelist entry).
+             Whitelist — GEMESSEN 2026-08-31, UND DIE LAGE IST NICHT DIE HIER
+             FRUEHER BEHAUPTETE:
+               Dieser Block sagte, adapter/ase-adp-libgit2/ sei in
+               core/ase-validator/ecs_validator/data/third_party_oop.json fuer
+               EXTERN_C_FORBIDDEN freigestellt. ES IST NICHT DARIN. Der Bestand
+               fuehrt genau drei Pfade — ase-adp-microtex/, ase-adp-gtk/ und
+               ase-adp-treesitter/ —, libgit2 ist keiner davon.
+
+               ES FEHLT DERZEIT AUCH NICHTS, und genau deshalb ist der Satz
+               gefaehrlich statt bloss falsch: dieser Adapter traegt in KEINER
+               .hpp/.cpp ein `extern "C"` — es kommt ausschliesslich aus
+               <git2.h> und bleibt hinter den Wrappern. Die Regel hat hier also
+               nie gefeuert, und niemand hatte je einen Anlass, die Behauptung
+               nachzuschlagen. Zum Vergleich, im selben Zug gemessen:
+               ase-adp-treesitter traegt `extern "C"` in echtem Code
+               (include/ase/adp/treesitter/grammars.hpp) — und steht deshalb
+               zu Recht im Bestand.
+
+               WER HIER `extern "C"` IN DEN CODE SCHREIBT, hat damit KEINE
+               Freistellung im Ruecken, auch wenn dieser Block das jahrelang
+               versprochen hat. Ob eine noetig wird, entscheidet dann der
+               Validator-Betreuer; ein Eintrag im Bestand ist eine WEITUNG und
+               wird nicht nebenbei von einer Modul-Session vorgenommen.
 
 @module      ase-adp-libgit2
 @layer       adapter (3rd-party isolation, consumed by L1+ code)
@@ -98,8 +116,27 @@ target_include_directories(${PROJECT_NAME}
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
+# ── ase::types (Layer 0) — carries the ok-or-error return type ──────
+# WRFL_ASE_STD_FORBIDDEN bans std::variant tree-wide; the adapter's
+# open()/scan()/list() return ase::types::Result<T, Error> instead. The
+# type appears in PUBLIC signatures, so the link must be PUBLIC too —
+# consumers need the header to name the return value.
+#
+# ase-types is a header-only INTERFACE target on Layer 0. A dependency
+# downward to L0 is allowed from every layer, and it adds no build step:
+# the adapter stays standalone-buildable. When this CMakeLists is not the
+# top (the explorer or a tier pulls it in), the target already exists.
+if(NOT TARGET ase::types)
+    add_subdirectory(
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../foundation/ase-types
+        ${CMAKE_CURRENT_BINARY_DIR}/_ase-types
+    )
+endif()
+
 # libgit2 itself is a PRIVATE link dep — consumers never see <git2.h>.
 target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+        ase::types
     PRIVATE
         PkgConfig::LIBGIT2
 )
@@ -114,7 +151,29 @@ install(DIRECTORY include/ase
 )
 
 # ── Standalone example (only built when this CMakeLists is the top) ──
+#
+# The example writes through ase-log (WRFL_ASE_LOGGING_COMPLIANCE bans the
+# direct stdout call), so it links ase::log on top of the adapter. That is
+# an L1 dependency of the EXAMPLE, not of the adapter: the executable is a
+# consumer, and consumers may use the layers above this one. The adapter
+# target itself stays clean — it links only ase::types and libgit2.
+#
+# ase-log resolves its own generated header via ASE_ROOT when it is not
+# built from the repository root, so the standalone path needs that set.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    if(NOT TARGET ase::log)
+        set(ASE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." CACHE PATH
+            "Repository root — ase-log locates its generated category header from here")
+        add_subdirectory(
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ase-log
+            ${CMAKE_CURRENT_BINARY_DIR}/_ase-log
+        )
+    endif()
+
     add_executable(ase-adp-libgit2-example example/example_main.cpp)
-    target_link_libraries(ase-adp-libgit2-example PRIVATE ${PROJECT_NAME})
+    target_link_libraries(ase-adp-libgit2-example
+        PRIVATE
+            ${PROJECT_NAME}
+            ase::log
+    )
 endif()
