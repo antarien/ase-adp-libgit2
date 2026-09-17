@@ -68,7 +68,7 @@ libgit2 is thread-safe at the **handle** level — distinct `git_repository*` in
 
 ## Architecture & layer
 
-`adapter/` is a top-level isolation layer that sits orthogonal to the `L0..L5` ECS stack. This adapter depends on system-installed `libgit2` (>= 1.0; tested with 1.9.x on Arch Linux and Debian Trixie). Found via `pkg-config`. The `adapter/ase-adp-libgit2/` path is whitelisted in `core/ase-validator/ecs_validator/data/third_party_oop.json` for the `EXTERN_C_FORBIDDEN` rule — consumers do **not** need their own whitelist entry.
+`adapter/` is a top-level isolation layer that sits orthogonal to the `L0..L5` ECS stack. This adapter depends on system-installed `libgit2` (>= 1.0; tested with 1.9.x on Arch Linux and Debian Trixie). Found via `pkg-config`. The `adapter/ase-adp-libgit2/` path is whitelisted in `tools/ase-forge/ase-validator/ecs_validator/data/third_party_oop.json` for the `EXTERN_C_FORBIDDEN` rule — consumers do **not** need their own whitelist entry.
 
 ## Build
 

@@ -29,7 +29,7 @@ ASE LIBGIT2 ADAPTER BUILD CONFIGURATION
              Whitelist — GEMESSEN 2026-08-31, UND DIE LAGE IST NICHT DIE HIER
              FRUEHER BEHAUPTETE:
                Dieser Block sagte, adapter/ase-adp-libgit2/ sei in
-               core/ase-validator/ecs_validator/data/third_party_oop.json fuer
+               tools/ase-forge/ase-validator/ecs_validator/data/third_party_oop.json fuer
                EXTERN_C_FORBIDDEN freigestellt. ES IST NICHT DARIN. Der Bestand
                fuehrt genau drei Pfade — ase-adp-microtex/, ase-adp-gtk/ und
                ase-adp-treesitter/ —, libgit2 ist keiner davon.
